@@ -18,31 +18,49 @@ def open_article(articles):
     PATH = "/home/buura/Desktop/operadriver_linux64/operadriver"
     driver = webdriver.Opera(executable_path=PATH)
     driver.get(articles[1])
+    articles = []
 
 
 # A pop-up window to show the articles
 
 
 def pop_up_results(amount, article_names, article_links):
+    def _from_rgb(rgb):
+        return "#%02x%02x%02x" % rgb
     top = tk.Toplevel()  # Creating a pop-up window to show the results
     top.configure(background="white")
     top.title("Article Results")
+    top.geometry("500x600")
+    # Adding a scroll bar
+    top_frame = tk.Frame(top)
+    top_frame.pack(fill="both", expand=True)
+    canvas = tk.Canvas(top_frame)
+    canvas.pack(side="left", fill="both", expand=True)
+    scroll_bar = ttk.Scrollbar(
+        top_frame, orient="vertical", command=canvas.yview)
+    scroll_bar.pack(side="right", fill="y")
+    canvas.configure(yscrollcommand=scroll_bar.set)
+    canvas.bind("<Configure>", lambda e: canvas.configure(
+        scrollregion=canvas.bbox("all")))
+
+    secFrame = tk.Frame(canvas)
+    canvas.create_window((0, 0), window=secFrame, anchor="nw")
     # Showing another message if the user input is 1.For grammar reasons
     if amount == 1:
         text = "An article was randomized"
     else:
         text = f"{amount} articles were randomized."
     tk_resultsfound_label = tk.Label(
-        top, text=text, bg="white", fg="black", font="none 15")
+        secFrame, text=text, bg="white", fg="black", font="none 15")
     tk_resultsfound_label.pack(side="top")
     # A label and a button for each article
     for articles in zip(article_names, article_links):
         label = tk.Label(
-            top, text=articles[0], bg="white", fg="black", font="none 12")
+            secFrame, text=articles[0], bg=_from_rgb((64, 64, 64)), fg="white", font="none 12")
         # If lamba isn't used it just pops up the articles
         button = tk.Button(top, text="Read it!",
                            command=lambda articles=articles: open_article(articles))
-        label.pack()
+        label.pack(padx=10)
         button.pack()
 
 # Defining the function that randomizes the articles
@@ -66,8 +84,13 @@ def randomize_article(amount=5):
         # Fetching the name
         result = re.search(r'"en">(.*?)</h1>', str(ids))
         article_names.append(result.group(1))
-    print(article_names, article_links)
     pop_up_results(amount, article_names, article_links)
+    # Emptying the lists after the function call so that it doesn't append another randomize request to the old ones
+    article_links = []
+    article_names = []
+    href_matches = []
+    id_matches = []
+
 
 # The main window's functions:
 
